@@ -24,8 +24,8 @@ if __name__ == '__main__':
     # Create an AttrDict with your arguments.
     args = AttrDict()
     args.update({
-        "cut_selection": "25mm_tip",                         # The cut location
-        "output": "temp",                                    # Output directory path
+        "cut_selection": "PIV1",                         # The cut location
+        "output": "Temp",                                   # Output directory
         "nstart": 6,                                         # Starting folder index
         "mstart": 0,                                         # Files to skip initially
         "max_file": 100,                                     # Maximum number of files to extract

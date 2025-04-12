@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-cut_style", required=True, choices=['plane', 'cylinder', 'sphere'],
                         help="Style of the cut: plane, cylinder, or sphere.")
     parser.add_argument("--cut_selection", required=True, help="Cut selection location. Must be in the form of <%>_TE for spanwise cut or <mm>_tip for streamwise cut.")
-    parser.add_argument("--output", required=True, help="Output directory path.")
+    parser.add_argument("--output", required=False, default="Temp", help="Output directory path.")
     # Arguments for mesh locations and solution directory
     parser.add_argument("--mesh_path", default='/home/p/plavoie/denggua1/scratch/Bombardier_LES/B_10AOA_LES/MESH_ZONE_Apr24/',
                         help="Path to the mesh directory.")
