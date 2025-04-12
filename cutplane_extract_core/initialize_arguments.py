@@ -18,13 +18,13 @@ def parse_args() -> argparse.Namespace:
         description="Extract cut-planes from simulation solution files."
     )
     
-    parser.add_argument("-nstart", type=int, default=0, help="Starting folder index (default: 0).")
-    parser.add_argument("-mstart", type=int, default=0, help="Number of files to skip initially (default: 0).")
-    parser.add_argument("-max_file", type=int, required=True, help="Maximum number of files to extract.")
-    parser.add_argument("-AoA", type=int, default=10, help="Angle of attack degrees (default: 10).")
-    parser.add_argument("-VGT", action="store_true", help="Extract the velocity gradient tensor.")
-    parser.add_argument("-restart", action="store_true", help="Restart extraction from last file in output directory.")
-    parser.add_argument("-cut_style", required=True, choices=['plane', 'cylinder', 'sphere'],
+    parser.add_argument("--nstart", type=int, default=0, help="Starting folder index (default: 0).")
+    parser.add_argument("--mstart", type=int, default=0, help="Number of files to skip initially (default: 0).")
+    parser.add_argument("--max_file", type=int, required=True, help="Maximum number of files to extract.")
+    parser.add_argument("--AoA", type=int, default=10, help="Angle of attack degrees (default: 10).")
+    parser.add_argument("--VGT", action="store_true", help="Extract the velocity gradient tensor.")
+    parser.add_argument("--restart", action="store_true", help="Restart extraction from last file in output directory.")
+    parser.add_argument("--cut_style", required=True, choices=['plane', 'cylinder', 'sphere'],
                         help="Style of the cut: plane, cylinder, or sphere.")
     parser.add_argument("--cut_selection", required=True, help="Cut selection location. Must be in the form of <%>_TE for spanwise cut or <mm>_tip for streamwise cut.")
     parser.add_argument("--output", required=False, default="Temp", help="Output directory path.")

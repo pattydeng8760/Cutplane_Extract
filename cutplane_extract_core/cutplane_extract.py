@@ -18,7 +18,7 @@ import builtins
 from antares import Reader, Treatment, Writer
 
 # Import custom modules and initialization routines
-from .config import TIP_GAP, SPAN, AOA
+from .config import TIP_GAP, SPAN
 from .io_utils import select_folder, sort_files, compute_restart_parameters
 from .cut_mapper_utils import map_cut
 from .initialize_arguments import init, print_redirect
@@ -40,7 +40,7 @@ class CutplaneExtract:
         self.args = args                                # Store the command-line arguments
         if args.output == "Temp":
             default_output = f"Cut_{args.cut_selection}"
-        if args.extract_VGT:
+        if args.VGT:
             default_output += "_VGT"
         self.args.output = default_output
         os.makedirs(self.args.output, exist_ok=True)    # Create the output directory if it doesn't exist
@@ -63,7 +63,7 @@ class CutplaneExtract:
         self.print(f'   The number of files to skip initially is: {self.args.mstart}')
         self.print(f'   The maximum number of files to extract is: {self.args.max_file}')
         self.print(f'   The restart option is: {self.args.restart}')
-        self.print(f'   The velocity gradient tensor extraction option is: {self.args.extract_VGT}')
+        self.print(f'   The velocity gradient tensor extraction option is: {self.args.VGT}')
         self.print(f'\n{"Cutplane Extract Initialized":.^60}\n')
 
         # Build the full mesh file name from command-line arguments
@@ -139,7 +139,7 @@ class CutplaneExtract:
         comp.compute('w=rhow/rho', location='node')
         comp.compute('Q=Q1+Q2', location='node')
 
-        if self.args.extract_VGT:
+        if self.args.VGT:
             if self.check_velocity_gradient_tensor(sol_file):
                 comp.rename_variables(
                     ['du_dx', 'du_dy', 'du_dz',
@@ -173,7 +173,7 @@ class CutplaneExtract:
             treatment_cut['axis'] = 'x'
             treatment_cut['radius'] = 0.1
 
-        origin, normal = map_cut(self.args.cut_selection, self.args.cut_style, TIP_GAP, SPAN, AOA)
+        origin, normal = map_cut(self.args.cut_selection, self.args.cut_style, TIP_GAP, SPAN, self.args.AoA)
         treatment_cut['origin'] = origin
         treatment_cut['normal'] = normal
         # Execute the treatment
@@ -181,7 +181,7 @@ class CutplaneExtract:
         # Saving the cut
         self.print("       Saving solution")
         writer = Writer('hdf_antares')
-        if self.args.extract_VGT:
+        if self.args.VGT:
             writer['base'] = comp[:, :, ['x', 'y', 'z', 'u', 'v', 'w', 'rho', 'dilatation',
                                           'pressure', 'vort_x', 'grad_u_x', 'grad_u_y', 'grad_u_z',
                                           'grad_v_x', 'grad_v_y', 'grad_v_z',
@@ -220,7 +220,7 @@ class CutplaneExtract:
                 # Process the solution file
                 count = self.process_solution_file(sol_file, count)
                 elapsed = time.time() - iteration_start
-                self.print(f"   Iteration time: {elapsed:1.0f} s")
+                self.print(f"    Iteration time: {elapsed:1.0f} s")
         self.print(f'\n{"Complete Iterating Solution Directories":.^60}\n')  
     
     def timer(func):
