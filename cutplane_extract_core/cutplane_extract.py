@@ -39,10 +39,14 @@ class CutplaneExtract:
         # Redirect stdout to a log file in the output directory.
         self.args = args                                # Store the command-line arguments
         if args.output == "Temp":
-            default_output = f"Cut_{args.cut_selection}"
-        if args.VGT:
-            default_output += "_VGT"
-        self.args.output = default_output
+            if args.treatment == "cut":
+                default_output = f"Cut_{args.cut_selection}"
+                if args.extract_VGT:  # or args.VGT if that is your chosen name
+                    default_output += "_VGT"
+            elif args.treatment == "iso":
+                default_output = f"Iso_{args.isovar}_{int(args.isovalue)}"
+                # Optionally modify default_output further for isosurface extraction
+            self.args.output = default_output
         os.makedirs(self.args.output, exist_ok=True)    # Create the output directory if it doesn't exist
         log_filename = os.path.join(f'log_{os.path.basename(self.args.output)}.txt')    # Log file name
         sys.stdout = open(log_filename, "w", buffering=1)                               # Open log file for writing
@@ -55,10 +59,15 @@ class CutplaneExtract:
         self.print(f'   The solution directory is: {self.args.sol_dir}')
         self.print(f'   The output directory is: {self.args.output}') 
         self.print(f'   The mesh directory is: {self.mesh_fileName}')
-        self.print(f'   The cut style is: {self.args.cut_style}')
         self.print(f'   The angle of attack is: {self.args.AoA} degrees')
         self.print('----> Extraction Settings:')
-        self.print(f'   The cut selection is: {self.args.cut_selection}')  
+        self.print(f'   The treatment type is: {self.args.treatment}')
+        if args.treatment == 'iso':
+            self.print(f'   The isosurface variable is: {self.args.isovar}')
+            self.print(f'   The isosurface value is: {self.args.isovalue}')
+        elif args.treatment == 'cut':
+            self.print(f'   The cut selection is: {self.args.cut_selection}')
+            self.print(f'   The cut style is: {self.args.cut_style}')
         self.print(f'   The starting folder index is: {self.args.nstart}')
         self.print(f'   The number of files to skip initially is: {self.args.mstart}')
         self.print(f'   The maximum number of files to extract is: {self.args.max_file}')
@@ -115,7 +124,7 @@ class CutplaneExtract:
                 self.print("The key 'Additionals' does not exist in the file.")
                 return False
 
-    def process_solution_file(self, sol_file: str, count: int) -> int:
+    def process_cutplane_file(self, sol_file: str, count: int) -> int:
         """
         Process a single solution file: read, compute derived variables,
         apply cut treatment, and save output.
@@ -193,7 +202,71 @@ class CutplaneExtract:
         writer['filename'] = filename
         writer.dump()
         self.print(f"       Exported file: {filename}")
+        return count + 1
+    
+    
+    def process_isosurface_file(self, sol_file: str, count: int) -> int:
+        """
+        Process a single isosurface file: read, compute derived variables,
+        apply cut treatment, and save output.
 
+        Returns:
+            int: The updated global file count.
+        """
+        self.print(f"       Reading full solution file: {sol_file}")
+        r = Reader('hdf_avbp')
+        r['base'] = self.base_mesh
+        r['filename'] = sol_file
+        comp = r.read()
+        comp.compute(f'u=rhou/rho',location='node')
+        comp.compute(f'v=rhov/rho',location='node')
+        comp.compute(f'w=rhow/rho',location='node')
+        # Computing the Lambda 2 criterion
+        if self.args.isovar == 'L2':
+            # If the velocity gradient tensor exists, rename the variables
+            if self.check_velocity_gradient_tensor(sol_file):
+                comp.rename_variables(
+                    ['du_dx', 'du_dy', 'du_dz',
+                    'dv_dx', 'dv_dy', 'dv_dz',
+                    'dw_dx', 'dw_dy', 'dw_dz'],
+                    ['grad_u_x', 'grad_u_y', 'grad_u_z',
+                    'grad_v_x', 'grad_v_y', 'grad_v_z',
+                    'grad_w_x', 'grad_w_y', 'grad_w_z'],
+                    location=None
+                )
+                self.print("       Velocity gradient tensor exists; no gradient calculation required.")
+            else:
+                self.print("       Calculating gradient for velocity components")
+                treatment_grad = Treatment('gradient')
+                treatment_grad['base'] = comp
+                treatment_grad['variables'] = ('u', 'v', 'w')
+                comp = treatment_grad.execute()
+                comp.cell_to_node()
+            text = '       Computing L2'; print(f'{text}')
+            # Assigning your velocity variables
+            vd.velocity_names('u','v','w')
+            # Assigning your velocity gradients
+            vd.velocity_gradient_names('grad_u_x','grad_u_y','grad_u_z','grad_v_x','grad_v_y','grad_v_z','grad_w_x','grad_w_y','grad_w_z')
+            # Computing invariants
+            comp=vd.vorti(comp)
+            comp=vd.lambda_2(comp, eigVect=False)
+            if self.args.isovalue > 0:
+                self.args.isovalue = -1*self.args.isovalue
+        else:
+            comp.compute(f'Q=Q1+Q2',location='node')
+        self.print("       Extracting isosurface of {0} at {1:1.0f}".format(self.args.isovar, self.args.isovalue))
+        treatment = Treatment('isosurface')
+        treatment['base'] = comp
+        treatment['variable'] = self.args.isovar
+        treatment['base'] .attrs['Time'] = float(count)
+        treatment['value'] = self.args.isovalue
+        isosurf = treatment.execute()
+        w = Writer('hdf_antares')
+        filename = os.path.join(self.args.output,f'B_{int(self.args.AoA)}AOA_{self.args.isovar}_anim_{count:03d}') 
+        w['filename'] = filename
+        w['base'] = isosurf[:,:,['x','y','z','u']]
+        w.dump()
+        self.print(f"       Exported file: {filename}")
         return count + 1
 
     def process_solution_directories(self) -> None:
@@ -218,7 +291,10 @@ class CutplaneExtract:
                 self.print(f"\n    Iteration: {count}")
                 sol_file = os.path.join(self.args.sol_dir, arr[i], f"{files[j]}.h5")
                 # Process the solution file
-                count = self.process_solution_file(sol_file, count)
+                if self.args.treatment == 'cut':
+                    count = self.process_cutplane_file(sol_file, count)
+                elif self.args.treatment == 'iso':
+                    count = self.process_isosurface_file(sol_file, count)
                 elapsed = time.time() - iteration_start
                 self.print(f"    Iteration time: {elapsed:1.0f} s")
         self.print(f'\n{"Complete Iterating Solution Directories":.^60}\n')  

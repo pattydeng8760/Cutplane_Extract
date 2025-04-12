@@ -29,13 +29,16 @@ if __name__ == '__main__':
         "nstart": 6,                                         # Starting folder index
         "mstart": 0,                                         # Files to skip initially
         "max_file": 100,                                     # Maximum number of files to extract
-        "extract_VGT": False,                                # Whether to extract the velocity gradient tensor
+        "VGT": False,                                # Whether to extract the velocity gradient tensor
         "restart": False,                                    # Whether to restart extraction from the last file
         "cut_style": "plane",                                # Style of the cut (plane, cylinder, or sphere)
         "mesh_path": "/home/p/plavoie/denggua1/scratch/Bombardier_LES/B_10AOA_LES/MESH_ZONE_Nov24/",  # Mesh directory
         "mesh_file": "Bombardier_10AOA_Combine_Nov24.mesh.h5",                                     # Mesh file name
         "sol_dir": "/home/p/plavoie/denggua1/scratch/Bombardier_LES/B_10AOA_LES/RUN_ZONE_Nov24/SOLUT/",
-        "AoA": 10                                          # Angle of attack (if needed in your code)
+        "AoA": 10,                                          # Angle of attack (if needed in your code)
+        "treatment": "iso",                                  # Treatment type (iso or cut)
+        "isovar": "Q",                                       # Isosurface variable
+        "isovalue": 2e5,                                    # Isosurface value
     })
     
     run_extraction(args)
