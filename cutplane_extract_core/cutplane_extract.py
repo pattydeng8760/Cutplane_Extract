@@ -133,7 +133,7 @@ class CutplaneExtract:
         r['filename'] = sol_file
         comp = r.read()
 
-        self.print("        Computing non-conservative variables")
+        self.print("       Computing non-conservative variables")
         comp.compute('u=rhou/rho', location='node')
         comp.compute('v=rhov/rho', location='node')
         comp.compute('w=rhow/rho', location='node')
@@ -179,7 +179,7 @@ class CutplaneExtract:
         # Execute the treatment
         comp = treatment_cut.execute()
         # Saving the cut
-        self.print("        Saving solution")
+        self.print("       Saving solution")
         writer = Writer('hdf_antares')
         if self.args.extract_VGT:
             writer['base'] = comp[:, :, ['x', 'y', 'z', 'u', 'v', 'w', 'rho', 'dilatation',

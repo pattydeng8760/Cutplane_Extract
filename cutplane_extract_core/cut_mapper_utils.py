@@ -80,7 +80,5 @@ def map_cut(cut_selection: str, cut_style: str, tip_gap: float,
     else:
         raise ValueError("Unsupported cut style provided.")
     
-    print('The selected cut is of style: {0}'.format(cut_style))
-    print('The selected cut origin is: {0}'.format(origin))
-    print('The selected cut normal is: {0}'.format(normal))
+    print('        The selected cut is of style: {0},  origin: {1},  normal: {2}'.format(cut_style,origin,normal))
     return origin, normal

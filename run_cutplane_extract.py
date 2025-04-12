@@ -1,5 +1,5 @@
 """
-python_wrapper.py
+python_wrapper to run CutplaneExtract
 
 This script demonstrates how to call the CutplaneExtract class from the
 cutplane_extract_core package with custom arguments using an AttrDict.
