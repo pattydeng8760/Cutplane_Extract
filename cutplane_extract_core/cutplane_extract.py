@@ -38,16 +38,23 @@ class CutplaneExtract:
         """
         # Redirect stdout to a log file in the output directory.
         self.args = args                                # Store the command-line arguments
+        if args.output == "Temp":
+            default_output = f"Cut_{args.cut_selection}"
+        if args.extract_VGT:
+            default_output += "_VGT"
+        self.args.output = default_output
         os.makedirs(self.args.output, exist_ok=True)    # Create the output directory if it doesn't exist
         log_filename = os.path.join(f'log_{os.path.basename(self.args.output)}.txt')    # Log file name
         sys.stdout = open(log_filename, "w", buffering=1)                               # Open log file for writing
-        self.mesh_fileName = os.path.join(self.args.mesh_path, self.args.mesh_file)
+        
         self.print = print_redirect
+        self.print(f'\n{"Starting Cutplane Extract":=^100}\n')
+        self.mesh_fileName = os.path.join(self.args.mesh_path, self.args.mesh_file)
         self.print(f'\n{"Initializing Cutplane Extract":.^60}\n')
         self.print('----> Directory Settings:')
         self.print(f'   The solution directory is: {self.args.sol_dir}')
         self.print(f'   The output directory is: {self.args.output}') 
-        self.print(f'   The mesh directory is: {self.args.mesh_fileName}')
+        self.print(f'   The mesh directory is: {self.mesh_fileName}')
         self.print(f'   The cut style is: {self.args.cut_style}')
         self.print(f'   The angle of attack is: {self.args.AoA} degrees')
         self.print('----> Extraction Settings:')
@@ -69,14 +76,14 @@ class CutplaneExtract:
         Returns:
             The base mesh object.
         """
-        self.print(f'\n{"Reading Mesh":.^80}\n')  
+        self.print(f'\n{"Loading Mesh":.^60}\n')  
         self.print('----> Mesh Properties:')  
         r = Reader('hdf_avbp')
         r['filename'] = self.mesh_fileName
         r['shared'] = True  # Use the same mesh for all solutions
         base_mesh = r.read()
         base_mesh.show()
-        self.print(f'\n{"Mesh Loaded":.^80}\n')  
+        self.print(f'\n{"Mesh Loaded":.^60}\n')  
         # Returns the base mesh object
         return base_mesh
 
@@ -120,13 +127,13 @@ class CutplaneExtract:
         Returns:
             int: The updated global file count.
         """
-        self.print(f"Reading full solution file: {sol_file}")
+        self.print(f"       Reading full solution file: {sol_file}")
         r = Reader('hdf_avbp')
         r['base'] = self.base_mesh
         r['filename'] = sol_file
         comp = r.read()
 
-        self.print("Computing derived variables")
+        self.print("        Computing non-conservative variables")
         comp.compute('u=rhou/rho', location='node')
         comp.compute('v=rhov/rho', location='node')
         comp.compute('w=rhow/rho', location='node')
@@ -143,9 +150,9 @@ class CutplaneExtract:
                      'grad_w_x', 'grad_w_y', 'grad_w_z'],
                     location=None
                 )
-                self.print("Velocity gradient tensor exists; no gradient calculation required.")
+                self.print("        Velocity gradient tensor exists; no gradient calculation required.")
             else:
-                self.print("Calculating gradient for velocity components")
+                self.print("        Calculating gradient for velocity components")
                 treatment_grad = Treatment('gradient')
                 treatment_grad['base'] = comp
                 treatment_grad['variables'] = ('u', 'v', 'w')
@@ -153,7 +160,7 @@ class CutplaneExtract:
                 comp.cell_to_node()
 
         # Apply the cut or clip treatment based on the cut style.
-        self.print(f"Applying cut at: {self.args.cut_selection} with style: {self.args.cut_style}")
+        self.print(f"       Applying cut at: {self.args.cut_selection} with style: {self.args.cut_style}")
         if self.args.cut_style == 'plane':
             treatment_cut = Treatment('cut')
             treatment_cut['base'] = comp
@@ -172,7 +179,7 @@ class CutplaneExtract:
         # Execute the treatment
         comp = treatment_cut.execute()
         # Saving the cut
-        self.print("Saving solution")
+        self.print("        Saving solution")
         writer = Writer('hdf_antares')
         if self.args.extract_VGT:
             writer['base'] = comp[:, :, ['x', 'y', 'z', 'u', 'v', 'w', 'rho', 'dilatation',
@@ -185,7 +192,7 @@ class CutplaneExtract:
             filename = os.path.join(self.args.output, f'B_{int(self.args.AoA)}AOA_{self.args.cut_selection}_{count:03d}')
         writer['filename'] = filename
         writer.dump()
-        self.print(f"Exported file: {filename}")
+        self.print(f"       Exported file: {filename}")
 
         return count + 1
 
@@ -199,6 +206,7 @@ class CutplaneExtract:
             self.args.output, arr_dir, arr,
             self.args.nstart, self.args.restart, self.args.max_file, self.args.mstart
         )
+        self.print(f'\n{"Iterating Solution Directories":.^60}\n')  
         for i in range(i_start, min(i_end + 1, len(sol_dirs))):
             current_dir = os.path.join(arr_dir, arr[i])
             self.print(f"\nProcessing directory: {current_dir}")
@@ -207,13 +215,26 @@ class CutplaneExtract:
             j_end_current = j_end if i == i_end else len(files)
             for j in range(j_start_current, j_end_current):
                 iteration_start = time.time()
-                self.print(f"\nIteration: {count}")
+                self.print(f"\n    Iteration: {count}")
                 sol_file = os.path.join(self.args.sol_dir, arr[i], f"{files[j]}.h5")
                 # Process the solution file
                 count = self.process_solution_file(sol_file, count)
                 elapsed = time.time() - iteration_start
-                self.print(f"Iteration time: {elapsed:1.0f} s")
-
+                self.print(f"   Iteration time: {elapsed:1.0f} s")
+        self.print(f'\n{"Complete Iterating Solution Directories":.^60}\n')  
+    
+    def timer(func):
+        """ Decorator to time the function func to track the time taken for the function to run"""
+        def inner(*args, **kwargs):
+            start = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+            elapsed = end - start
+            print('The total compute time is: {0:1.0f} s'.format(elapsed))
+            return elapsed
+        return inner
+    
+    @timer
     def run(self) -> None:
         """
         Runs the extraction process: loads the mesh and processes all solution files.
@@ -222,6 +243,7 @@ class CutplaneExtract:
         self.base_mesh = self.load_mesh()
         # Process all solution directories and files
         self.process_solution_directories()
+        self.print(f'\n{"Cutplane Extract Complete":=^100}\n')
 
 
 def main() -> None:
