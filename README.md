@@ -36,8 +36,9 @@ Cutplane Extractor is a Python package designed to extract cut-planes (or clip r
    ```
 ### Option 2: Install python path
 If you prefer not to install the package, add the repository’s root directory to your PYTHONPATH:
+   ```bash
 export PYTHONPATH="/path/to/Cutplane_Extract:$PYTHONPATH"
-
+   ```
 ## Usage
 Command-Line Interface
 After installation or setting the PYTHONPATH, you can run the extraction using the provided wrapper or the bash script
