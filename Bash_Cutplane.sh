@@ -14,12 +14,15 @@ export PYTHONPATH="/home/p/plavoie/denggua1/scratch/Bombardier_LES/B_10AOA_LES/I
 echo "Starting direct run of CutplaneExtract class with shell arguments..."
 
 python -m cutplane_extract_core.cutplane_extract \
-  --cut_selection "25mm_tip" \
-  --output "Temp" \
-  --nstart 6 \
+  --cut_selection "25mm_tip" \       
+  --output "Temp" \                 
+  --nstart 6 \               
   --mstart 0 \
   --max_file 1000 \
   --cut_style "plane" \
+  --treatment "iso" \
+  --isovar "Q" \
+  --isovalue 2e5 \
   --mesh_path "/home/p/plavoie/denggua1/scratch/Bombardier_LES/B_10AOA_LES/MESH_ZONE_Nov24/" \
   --mesh_file "Bombardier_10AOA_Combine_Nov24.mesh.h5" \
   --sol_dir "/home/p/plavoie/denggua1/scratch/Bombardier_LES/B_10AOA_LES/RUN_ZONE_Nov24/SOLUT/" \
