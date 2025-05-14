@@ -109,10 +109,13 @@ def compute_restart_parameters(output_path: str, arr_dir: str, arr: List[str],
     if restart and start_files > 0:
         # If restarting, assume the last file indicates the start index via its filename
         last_file = output_files[-1]
-        parts = re.findall(r'\d+', os.path.basename(last_file))
+        base_file = os.path.splitext(os.path.basename(last_file))[0]  
+        parts = re.findall(r'\d+', base_file)   
         m_start_from_file = int(parts[-1]) if parts else 0
+        print(f"Restarting from file index {m_start_from_file} based on existing files.")
     else:
         m_start_from_file = m_start
+        print(f'Starting from file index {m_start_from_file} as no existing files were found or restart is not set.')
     
     if m_start_from_file > 0 and m_start_from_file < total_files:
         i_start, j_start, count_start = source_list[m_start_from_file]
