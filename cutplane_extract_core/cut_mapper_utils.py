@@ -20,7 +20,6 @@ class CutConstants:
         self.z_025inch_tip = tip_gap - 0.00635
         self.z_5mm_tip = tip_gap - 0.005
         self.z_25mm_tip = tip_gap - 0.025
-        self.z_tip_gap = tip_gap
 
 def map_cut(cut_selection: str, cut_style: str, tip_gap: float,
             span: float, AoA: int) -> Tuple[List[float], List[float]]:
@@ -72,6 +71,9 @@ def map_cut(cut_selection: str, cut_style: str, tip_gap: float,
             PIV = 1.25 + loc_val * 0.3048 * np.cos(AoA * np.pi / 180)
             origin = [PIV, 0.0, consts.z_mid_span]
             normal = [1.0, 0.0, 0.0]
+        elif "CD" in cut_selection:
+            origin = [0.0, 0.0, 0.0]
+            normal = [0.0, 0.0, 1.0]
         else:
             raise ValueError("Unrecognized cut_selection for plane cut.")
     elif cut_style in ['cylinder', 'sphere']:

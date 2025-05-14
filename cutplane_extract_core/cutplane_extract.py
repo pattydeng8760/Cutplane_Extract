@@ -22,7 +22,7 @@ from .config import TIP_GAP, SPAN
 from .io_utils import select_folder, sort_files, compute_restart_parameters
 from .cut_mapper_utils import map_cut
 from .initialize_arguments import init, print_redirect
-
+from . import vortex_detection as vd
 
 class CutplaneExtract:
     """
@@ -41,7 +41,7 @@ class CutplaneExtract:
         if args.output == "Temp":
             if args.treatment == "cut":
                 default_output = f"Cut_{args.cut_selection}"
-                if args.extract_VGT:  # or args.VGT if that is your chosen name
+                if args.VGT:  # or args.VGT if that is your chosen name
                     default_output += "_VGT"
             elif args.treatment == "iso":
                 default_output = f"Iso_{args.isovar}_{int(args.isovalue)}"

@@ -22,9 +22,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mstart", type=int, default=0, help="Number of files to skip initially (default: 0).")
     parser.add_argument("--max_file", type=int, required=True, help="Maximum number of files to extract.")
     parser.add_argument("--AoA", type=int, default=10, help="Angle of attack degrees (default: 10).")
-    parser.add_argument("--VGT", action="store_true", help="Extract the velocity gradient tensor.")
+    parser.add_argument("--VGT", type=bool, default=False, required = True, help="Extract the velocity gradient tensor.")
     parser.add_argument("--treatment", type=str, required=True, choices=['iso', 'cut'], help="Treatment type: iso or cut.")
-    parser.add_argument("--isovar", type=float, required=False, default='Q', choices=['Q','L2'],help="Isosurface Variable.")
+    parser.add_argument("--isovar", type=str, required=False, default='Q', choices=['Q','L2'],help="Isosurface Variable.")
     parser.add_argument("--isovalue", type=float, required=False, default=2e5, help="Isosurface Value.")
     parser.add_argument("--restart", action="store_true", help="Restart extraction from last file in output directory.")
     parser.add_argument("--cut_style", required=True, choices=['plane', 'cylinder', 'sphere'],

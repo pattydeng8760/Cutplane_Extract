@@ -16,3 +16,4 @@ from .io_utils import *
 from .cut_mapper_utils import *
 from .initialize_arguments import parse_args, init
 from .cutplane_extract import CutplaneExtract, main
+from . import vortex_detection as vd
